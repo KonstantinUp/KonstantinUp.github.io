@@ -932,7 +932,10 @@ game.newLoopFromConstructor('myGame', function () {
         };
 
         this.entry = function () {
-
+            pjs.system.setStyle({
+                            background: 'url(./image/start-game.jpg)  center no-repeat ',
+                            backgroundSize: 'cover'
+                        });
 
             let body = document.getElementById('main');
             let dead_menu = document.getElementById('dead');
