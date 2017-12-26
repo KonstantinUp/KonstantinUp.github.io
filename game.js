@@ -909,7 +909,7 @@ game.newLoopFromConstructor('myGame', function () {
         };
     });
 
-    function  location() {
+    function landingPage() {
         window.location = "https://konstantinup.github.io/about/index.html";
     }
 
@@ -964,7 +964,7 @@ game.newLoopFromConstructor('myGame', function () {
                 '<div class ="menu-wrapper">' +
                 '<h1>Game Zombie Mode</h1> ' +
                 '<div class="play" onclick="game.setLoop(\'delay\');">PLAY</div>' +
-                '<div class ="about" onclick="location()">About</div>' +
+                '<div class ="about" onclick="landingPage()">About</div>' +
                 '</div>';
 
 
