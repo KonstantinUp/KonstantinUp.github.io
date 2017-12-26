@@ -145,10 +145,13 @@ let gun = game.newImageObject({
 gun.setCenter(point(0, 10));
 
 
+let checkPoint = false;
+
+
 
 
 game.newLoopFromConstructor('myGame', function () {
-  console.log(1);
+
     let fence = [];
     let ground = [];
     let trees = [];
@@ -199,9 +202,55 @@ game.newLoopFromConstructor('myGame', function () {
 
     let step = 2;
 
+    let x;
+    let y;
+    let h;
+    let screenState ;
+
+
+    let personPosition ;
+    let bullet ;
+    let health ;
+    let healthPepcent ;
+    let score ;
+    let zombieKilledCount;
+
+    let gamingMessage = game.newTextObject({
+        x: game.getWH2().w - 150,
+        y: game.getWH2().h - 50,
+        text: "Save",
+        size: 100,
+        color: "#8b0d27",
+        alpha: 1,
+    });
+
+
+    let saveTime = 0;
+
+    let timer = pjs.OOP.newTimer(1000, function () {
+        saveTime++;
+    });
+
+
+    let shotMusic = pjs.wAudio.newAudio("./audio/gun_fire.wav", 0.2);
+    let damageMusic = pjs.wAudio.newAudio("./audio/damage.mp3", 0.3);
+    let stepMusic = pjs.wAudio.newAudio("./audio/step.wav", 0.1);
+    let backGroundMusic = pjs.wAudio.newAudio("./audio/background.wav", 0.4);
 
     this.update = function () {
 
+      let x;
+      let y;
+
+
+
+      if(key.isPress('SPACE')){
+          if( backGroundMusic.playing){
+              backGroundMusic.stop();
+          } else {
+              backGroundMusic.play();
+          }
+      }
 
         game.clear();
 
@@ -273,27 +322,31 @@ game.newLoopFromConstructor('myGame', function () {
             personAnimation.drawFrames(7, 12);
             pjs.vector.moveCollision(personAnimation, trees, speed);
             gun.move(speed);
+            stepMusic.play();
         }
         if (speed.x && !speed.y) {
             personAnimation.drawFrames(1, 6);
             pjs.vector.moveCollision(personAnimation, trees, speed);
             gun.move(speed);
+            stepMusic.play();
         }
 
         if (key.isDown('W') && key.isDown('A') || key.isDown('S') && key.isDown('D')) {
             personAnimation.drawFrames(13, 18);
             pjs.vector.moveCollision(personAnimation, trees, speed);
             gun.move(speed);
+            stepMusic.play();
         }
 
         if (key.isDown('W') && key.isDown('D') || key.isDown('A') && key.isDown('S')) {
             personAnimation.drawFrames(19, 24);
             pjs.vector.moveCollision(personAnimation, trees, speed);
             gun.move(speed);
+            stepMusic.play();
         }
 
 
-        if (zombies.length === 35) {
+        if (zombies.length === 65) {
             game.setLoop('winner');
         }
 
@@ -377,9 +430,9 @@ game.newLoopFromConstructor('myGame', function () {
                 });
 
                 if (personAnimation.isIntersect(zombie)) {
+                    damageMusic.play();
                     zombie.damage = 0.1;
                     personAnimation.drawStaticBox();
-                    zombie.setAlpha(0);
                     zombieAttackAnimation.rotate(personAnimation.getPositionC());
                     zombieAttackAnimation.x = zombie.x;
                     zombieAttackAnimation.y = zombie.y;
@@ -416,20 +469,66 @@ game.newLoopFromConstructor('myGame', function () {
         }
 
         if (mouse.isPress('LEFT') && Bullets.count) {
+            shotMusic.play();
             Bullets.count -=1;
             addBullet();
         }
+        if(key.isDown('E') && !checkPoint){
+            checkPoint = true;
+            personPosition = personAnimation.getPosition();
+            bullet =  Bullets.count;
+            health = personAnimation.health;
+            healthPepcent = personAnimation.healthPepcent;
+            score = personAnimation.score ;
+            zombieKilledCount = personAnimation.zombieKilledCount;
+            timer.start();
+        }
+
+        if(saveTime > 0 && saveTime < 6){
+            timer.restart();
+            gamingMessage.x = personAnimation.getPositionC().x - 100;
+            gamingMessage.y = personAnimation.getPositionC().y -  400;
+            gamingMessage.draw();
+            gamingMessage.transparent(-0.005);
+        }
 
         if (key.isDown('TAB') && isFullScreen) {
-            pjs.system.exitFullScreen();
+            if(screenState ){
+                pjs.system.exitFullScreen();
+                pjs.system.initFullPage();
+                console.log(1);
+                setTimeout(function () {
+                    y =  y+60;
+                    camera.setPositionC(point( x,y));
+                },100);
+
+                screenState = false;
+
+            } else {
+                pjs.system.exitFullScreen();
+                pjs.system.initFullPage();
+                camera.setPositionC(point(cameraPositionXCurrent, cameraPositionYCurrent));
+            }
         }
+
 
 
         if (key.isDown("R")) {
+            backGroundMusic.stop();
             game.setLoop('pause');
+            return;
         }
 
         let staticBox = camera.getStaticBox();
+         x = staticBox.x;
+         y = staticBox.y;
+         h = staticBox.h;
+
+         if(staticBox.y+ staticBox.h>1300){
+             screenState = true;
+             cameraPositionYCurrent = cameraPositionYCurrent -60;
+             camera.setPositionC(point( cameraPositionXCurrent,cameraPositionYCurrent));
+         }
 
         if (staticBox.x > 0 && (staticBox.x + staticBox.w) < 2550 && staticBox.y > 0  && (staticBox.y+ staticBox.h) < 1190) {
             camera.setPositionC(personAnimation.getPositionC());
@@ -455,6 +554,7 @@ game.newLoopFromConstructor('myGame', function () {
 
         } else if(staticBox.x <= 0 && staticBox.y <= 0) {
             camera.setPositionC({ x: camPos.x, y: camPos.y });
+            // console.log(cameraPositionXCurrent ,cameraPositionXCurrent);
             if (personAnimation.getPositionC().y > camPos.y) {
                 camera.setPositionC({ x: camPos.x, y: personAnimation.getPositionC().y });
             } else   if (personAnimation.getPositionC().x > camPos.x) {
@@ -494,6 +594,9 @@ game.newLoopFromConstructor('myGame', function () {
         cameraPositionXCurrent = camPos.x;
         cameraPositionYCurrent = camPos.y;
 
+        x= cameraPositionXCurrent;
+        y =cameraPositionYCurrent;
+
         pjs.brush.drawText({
             text: 'HEALTH : ' + (personAnimation.healthPepcent).toFixed() + '%',
             x: camPos.x + 400, y: camPos.y - 450,
@@ -528,7 +631,7 @@ game.newLoopFromConstructor('myGame', function () {
         });
 
         pjs.brush.drawText({
-            text: 'Your key to save: ' + zombies.length,
+            text: 'Your key to salvation: ' + zombies.length,
             x: camPos.x + 400, y: camPos.y - 300,
             size: 30,
             color: "#ff5340"
@@ -550,10 +653,12 @@ game.newLoopFromConstructor('myGame', function () {
 
     this.entry = function () {
 
-        camera.setPositionC(point( cameraPositionXCurrent,cameraPositionXCurrent));
+        camera.setPositionC(point( cameraPositionXCurrent,cameraPositionYCurrent));
 
         heartTimer.start();
         crystalTimer.start();
+
+        // saveTimer.start();
 
         pjs.system.setStyle({
             background: 'url(./image/texture.jpg) center no-repeat',
@@ -583,6 +688,21 @@ game.newLoopFromConstructor('myGame', function () {
         if (fullScreenWrapper) {
             body.removeChild(fullScreenWrapper);
         }
+         if(checkPoint && !restartFlag ){
+             pjs.OOP.clearArr(zombies);
+             personAnimation.setPosition( personPosition);
+             gun.setPosition(personPosition);
+             Bullets.count = bullet ;
+             personAnimation.health = health ;
+             personAnimation.healthPepcent = healthPepcent;
+             personAnimation.score  = score;
+             personAnimation.zombieKilledCount = zombieKilledCount;
+             camera.moveTimeC(point(cameraPositionXCurrent,cameraPositionYCurrent),50);
+             checkPoint = false;
+             personAnimation.diad = false;
+             saveTime = 0;
+             gamingMessage.alpha = 1;
+         }
 
         if (restartFlag) {
             pjs.OOP.clearArr(zombies);
@@ -599,11 +719,14 @@ game.newLoopFromConstructor('myGame', function () {
             gun.x = width / 2 - gun.w / 2;
             gun.y = height / 2 - gun.h / 2;
             restartFlag = false;
+            checkPoint = false;
+            saveTime = 0;
+            gamingMessage.alpha = 1;
         }
+
         if (fullScreenFlag) {
             pjs.system.initFullScreen();
             fullScreenFlag = false;
-            camera.setPositionC(point( cameraPositionXCurrent,cameraPositionXCurrent))
         }
 
 
@@ -635,11 +758,12 @@ game.newLoopFromConstructor('myGame', function () {
                 '<div class="score"></div>' +
                 '<h1>Game Over</h1> ' +
                 '<div class="settings" onclick="restart();">Restart</div>' +
+                '<div class="settings" onclick="game.setLoop(\'myGame\');">CheckPoint</div>'+
                 '<div class="settings" onclick="game.setLoop(\'gameStart\');">Exit</div>' +
                 '</div>';
 
             let score = document.getElementsByClassName('score')[0];
-            score.innerHTML = 'Zombies have killed:' + personAnimation.zombieKilledCount;
+            score.innerHTML = 'Zombies have been killed:' + personAnimation.zombieKilledCount;
 
         };
 
@@ -653,6 +777,7 @@ game.newLoopFromConstructor('myGame', function () {
 
         this.update = function () {
 
+            camera.setPositionC(point( cameraPositionXCurrent,cameraPositionYCurrent));
         };
 
         this.entry = function () {
@@ -784,6 +909,9 @@ game.newLoopFromConstructor('myGame', function () {
         };
     });
 
+    function  location() {
+        window.location = "https://konstantinup.github.io/about/index.html";
+    }
 
     game.newLoopFromConstructor('gameStart', function () {
 
@@ -836,9 +964,9 @@ game.newLoopFromConstructor('myGame', function () {
                 '<div class ="menu-wrapper">' +
                 '<h1>Game Zombie Mode</h1> ' +
                 '<div class="play" onclick="game.setLoop(\'delay\');">PLAY</div>' +
-                '<div class="settings">Settings</div>' +
-                '<div class ="about">About</div>' +
+                '<div class ="about" onclick="location()">About</div>' +
                 '</div>';
+
 
         };
 
