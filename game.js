@@ -35,8 +35,8 @@ let zombieTimer = pjs.OOP.newTimer(500, function () {
         alpha: 1,
         damage:0.1,
         walking:true,
-        w: 50,
-        h: 50
+        w: 80,
+        h: 80
     });
     if (personAnimation.getDistanceC(zombieMoveAnimation.getPositionC()) < 200) {
         return;
@@ -77,6 +77,22 @@ let crystalTimer = pjs.OOP.newTimer(5000, function () {
     }
     cryltals.push(crystal);
 });
+
+     let personPositionX;
+     let personPositionY;
+
+let bloodArr = [];
+let bloodTimer = pjs.OOP.newTimer(500,function  () {
+    let objBlood= game.newImageObject({
+        file: "./image/blood.png",
+        x: math.random(personPositionX - 70, personPositionX + 70),
+        y: math.random(personPositionY - 70, personPositionY + 70),
+        h: 80,
+        w: 80,
+    });
+    bloodArr.push(objBlood);
+});
+
 
 let Bullets = [];
 let addBullet = function () {
@@ -131,8 +147,8 @@ let zombieAttackFrames = zombieAttackTile.getAnimation(0, 0, 227, 235, 8);
 
 let zombieAttackAnimation = game.newAnimationObject({
     animation: zombieAttackFrames,
-    w: 50,
-    h: 50
+    w: 100,
+    h: 100
 });
 
 
@@ -244,6 +260,8 @@ game.newLoopFromConstructor('myGame', function () {
 
 
 
+
+
       if(key.isPress('SPACE')){
           if( backGroundMusic.playing){
               backGroundMusic.stop();
@@ -275,11 +293,20 @@ game.newLoopFromConstructor('myGame', function () {
             water.draw();
 
             if (personAnimation.isIntersect(water)) {
-                step = 1;
+                step = 5;
                 setTimeout(function () {
                     step = 2;
                 }, 3000);
             }
+        });
+
+        OOP.forArr(bloodArr, function (blood,bloodId) {
+            blood.draw();
+            let bloodid = bloodId;
+            setTimeout(function () {
+                bloodArr.splice(bloodid, 1);
+            }, 3000);
+
         });
 
 
@@ -298,7 +325,7 @@ game.newLoopFromConstructor('myGame', function () {
             }
         });
 
-        if (key.isDown('A')) {
+        if (key.isDown('A') && !((key.isDown('D')))) {
             speed.x = -step;
         } else if (key.isDown('D')) {
             speed.x = step;
@@ -306,7 +333,7 @@ game.newLoopFromConstructor('myGame', function () {
             speed.x = 0;
         }
 
-        if (key.isDown('W')) {
+        if (key.isDown('W') && !((key.isDown('S')))) {
             speed.y = -step;
         } else if (key.isDown('S')) {
             speed.y = step;
@@ -316,35 +343,32 @@ game.newLoopFromConstructor('myGame', function () {
 
         if (speed.x === 0 && speed.y === 0) {
             personAnimation.drawFrames(0);
-        }
-
-        if (speed.y && !speed.x) {
+        } else if (speed.y && !speed.x) {
             personAnimation.drawFrames(7, 12);
             pjs.vector.moveCollision(personAnimation, trees, speed);
             gun.move(speed);
             stepMusic.play();
-        }
-        if (speed.x && !speed.y) {
+        } else if (speed.x && !speed.y) {
             personAnimation.drawFrames(1, 6);
             pjs.vector.moveCollision(personAnimation, trees, speed);
             gun.move(speed);
             stepMusic.play();
         }
 
-        if (key.isDown('W') && key.isDown('A') || key.isDown('S') && key.isDown('D')) {
+        if (key.isDown('W') && key.isDown('A') || key.isDown('S') && key.isDown('D') ) {
             personAnimation.drawFrames(13, 18);
             pjs.vector.moveCollision(personAnimation, trees, speed);
             gun.move(speed);
             stepMusic.play();
-        }
-
-        if (key.isDown('W') && key.isDown('D') || key.isDown('A') && key.isDown('S')) {
+        } else if (key.isDown('W') && key.isDown('D') || key.isDown('A') && key.isDown('S')) {
             personAnimation.drawFrames(19, 24);
             pjs.vector.moveCollision(personAnimation, trees, speed);
             gun.move(speed);
             stepMusic.play();
         }
 
+        personPositionX = personAnimation.getPositionC().x;
+        personPositionY = personAnimation.getPositionC().y;
 
         if (zombies.length === 65) {
             game.setLoop('winner');
@@ -377,8 +401,8 @@ game.newLoopFromConstructor('myGame', function () {
             heart.draw();
 
             if (personAnimation.isIntersect(heart)) {
-                personAnimation.healthPepcent += 10;
-                personAnimation.health += 20;
+                personAnimation.healthPepcent += 20;
+                personAnimation.health += 40;
 
                 if (personAnimation.health >= 200) {
                     personAnimation.health = 200;
@@ -431,12 +455,14 @@ game.newLoopFromConstructor('myGame', function () {
 
                 if (personAnimation.isIntersect(zombie)) {
                     damageMusic.play();
+                    bloodTimer.restart();
                     zombie.damage = 0.1;
                     personAnimation.drawStaticBox();
                     zombieAttackAnimation.rotate(personAnimation.getPositionC());
                     zombieAttackAnimation.x = zombie.x;
                     zombieAttackAnimation.y = zombie.y;
-                    zombieAttackAnimation.draw();
+
+
                     if (personAnimation.healthPepcent <= 1) {
                         personAnimation.diad = true;
                         return;
